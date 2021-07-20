@@ -50,8 +50,8 @@ public final class ClientOperations {
 		}
 	}
 
-	private static void checkingWithServerForGameStart(final CloseableHttpClient httpClient,
-			HttpGet getRequestGameStatus) throws IOException, InterruptedException {
+	static void checkingWithServerForGameStart(final CloseableHttpClient httpClient, HttpGet getRequestGameStatus)
+			throws IOException, InterruptedException {
 		ServerResponse serverResponse;
 		do {
 
@@ -149,61 +149,78 @@ public final class ClientOperations {
 	}
 
 	public static void playGame(final CloseableHttpClient httpClient) throws IOException, InterruptedException {
-		var reader = new BufferedReader(new InputStreamReader(System.in));
-		String name = reader.readLine();
+		try (var reader = new BufferedReader(new InputStreamReader(System.in))) {
 
-		ClientOperations.addPlayer(httpClient, name);
+			String name = readName(reader);
 
-		var getGameStatus = new HttpGet(GET_GAME_STATUS_URL);
+			ClientOperations.addPlayer(httpClient, name);
 
-		try {
-			checkingWithServerForGameStart(httpClient, getGameStatus);
+			var getGameStatus = new HttpGet(GET_GAME_STATUS_URL);
 
-			ServerResponse serverResponse = null;
-			var isWinningConditionMet = false;
-			var isDrawConditionMet = false;
+			try {
+				checkingWithServerForGameStart(httpClient, getGameStatus);
 
-			do {
-				serverResponse = ClientOperations.getGameStatus(httpClient, GET_GAME_STATUS_URL);
+				ServerResponse serverResponse = null;
+				var isWinningConditionMet = false;
+				var isDrawConditionMet = false;
 
-				if (serverResponse.isWinningConditionMet()) {
-					ClientOperations.displayUpdatedGameBoard(serverResponse.getBoard());
-					break;
-				}
+				do {
+					serverResponse = ClientOperations.getGameStatus(httpClient, GET_GAME_STATUS_URL);
 
-				if (serverResponse.isMyTurn()) {
-					ClientOperations.displayUpdatedGameBoard(serverResponse.getBoard());
+					if (serverResponse.isWinningConditionMet()) {
+						ClientOperations.displayUpdatedGameBoard(serverResponse.getBoard());
+						break;
+					}
 
-					serverResponse = sendTurnAndUpdateBoard(httpClient, reader, serverResponse);
+					if (serverResponse.isMyTurn()) {
+						ClientOperations.displayUpdatedGameBoard(serverResponse.getBoard());
 
-					isWinningConditionMet = serverResponse.isWinningConditionMet();
-					isDrawConditionMet = serverResponse.isDrawConditionMet();
+						serverResponse = sendTurnAndUpdateBoard(httpClient, reader, serverResponse);
 
-				} else {
-					waitForOtherPlayer(serverResponse);
-				}
+						isWinningConditionMet = serverResponse.isWinningConditionMet();
+						isDrawConditionMet = serverResponse.isDrawConditionMet();
 
-			} while (!isWinningConditionMet || !isDrawConditionMet);
+					} else {
+						waitForOtherPlayer(serverResponse);
+					}
 
-			setGameResult(serverResponse, isWinningConditionMet, isDrawConditionMet);
+				} while (!isWinningConditionMet || !isDrawConditionMet);
 
-		} finally {
-			var exitGameCleanly = new HttpGet(EXIT_GAME_URL);
-			try (CloseableHttpResponse response = httpClient.execute(exitGameCleanly)) {
+				setGameResult(serverResponse, isWinningConditionMet, isDrawConditionMet);
+
 			} finally {
-				ConsoleMenuService.gameOverMenu();
+				var exitGameCleanly = new HttpGet(EXIT_GAME_URL);
+				try (CloseableHttpResponse response = httpClient.execute(exitGameCleanly)) {
+				} finally {
+					ConsoleMenuService.gameOverMenu();
+				}
 			}
 		}
 	}
 
-	private static String promptForUserMove(BufferedReader reader, ServerResponse serverResponse) throws IOException {
+	static String readName(BufferedReader reader) throws IOException {
+
+		String name = reader.readLine();
+		while (name == null || name.isBlank()) {
+
+			System.out.println("name cannot be null.. try again");
+			name = reader.readLine();
+			if (name != null && !name.isBlank()) {
+				break;
+			}
+
+		}
+		return name;
+	}
+
+	static String promptForUserMove(BufferedReader reader, ServerResponse serverResponse) throws IOException {
 		String position;
 		ConsoleMenuService.makeAMoveMenu(serverResponse.getCurrentPlayer().getName());
 		position = reader.readLine();
 		return position;
 	}
 
-	private static void sendPlayerMove(final CloseableHttpClient httpClient, BufferedReader reader,
+	static void sendPlayerMove(final CloseableHttpClient httpClient, BufferedReader reader,
 			ServerResponse serverResponse) throws IOException {
 		var isPositionValid = false;
 		String position;
@@ -222,7 +239,7 @@ public final class ClientOperations {
 		} while (!hasServerProcessedMove);
 	}
 
-	private static ServerResponse sendTurnAndUpdateBoard(final CloseableHttpClient httpClient, BufferedReader reader,
+	static ServerResponse sendTurnAndUpdateBoard(final CloseableHttpClient httpClient, BufferedReader reader,
 			ServerResponse serverResponse) throws IOException {
 		sendPlayerMove(httpClient, reader, serverResponse);
 		serverResponse = ClientOperations.getGameStatus(httpClient, GET_GAME_STATUS_URL);
@@ -230,7 +247,7 @@ public final class ClientOperations {
 		return serverResponse;
 	}
 
-	private static void setGameResult(ServerResponse serverResponse, boolean isWinningConditionMet,
+	static void setGameResult(ServerResponse serverResponse, boolean isWinningConditionMet,
 			boolean isDrawConditionMet) {
 		if (isDrawConditionMet) {
 			ConsoleMenuService.drawResultMenu();
@@ -247,12 +264,12 @@ public final class ClientOperations {
 		}
 	}
 
-	private static void waitForOtherPlayer(ServerResponse serverResponse) throws InterruptedException {
+	static void waitForOtherPlayer(ServerResponse serverResponse) throws InterruptedException {
 		Thread.sleep(WAITING_PERIOD_FOR_PLAYER_TO_MOVE);
 		ConsoleMenuService.waitForTheOtherPlayerMoveMenu(serverResponse.getCurrentPlayer().getName());
 	}
 
-	private ClientOperations() {
+	ClientOperations() {
 
 	}
 }
