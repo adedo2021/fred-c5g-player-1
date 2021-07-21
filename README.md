@@ -28,4 +28,6 @@
 
 1. you need 2 clients to run against the server
 
-2. Run => "mvn exec:java"
+2. Run => "mvn clean install"
+
+3. Run => "mvn exec:java"
