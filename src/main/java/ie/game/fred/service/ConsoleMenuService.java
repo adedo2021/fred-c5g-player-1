@@ -18,6 +18,10 @@ public class ConsoleMenuService {
 		System.out.println(winnerName + " wins the game");
 	}
 
+	public static void resetClientDataOnServerMenu() {
+		System.out.println("Reset client data on server");
+	}
+
 	public static void makeAMoveMenu(String playerName) {
 		System.out.println();
 		System.out.println(playerName + " , Please enter a position between 1-9 to take a turn. ");

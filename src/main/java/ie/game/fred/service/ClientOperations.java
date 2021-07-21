@@ -191,6 +191,7 @@ public final class ClientOperations {
 			} finally {
 				var exitGameCleanly = new HttpGet(EXIT_GAME_URL);
 				try (CloseableHttpResponse response = httpClient.execute(exitGameCleanly)) {
+					ConsoleMenuService.resetClientDataOnServerMenu();
 				} finally {
 					ConsoleMenuService.gameOverMenu();
 				}
