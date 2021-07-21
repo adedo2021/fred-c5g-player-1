@@ -6,10 +6,10 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<groupId>ie.game.fred</groupId>
-	<artifactId>fred-c5g-player-2</artifactId>
+	<artifactId>fred-c5g-player</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 
-	<name>fred-c5g-player-2</name>
+	<name>fred-c5g-player</name>
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
